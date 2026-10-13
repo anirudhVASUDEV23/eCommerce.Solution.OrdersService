@@ -15,7 +15,13 @@ public class OrdersRepository : IOrdersRepository
 
     public async Task<Order?> AddOrder(Order order)
     {
-        order.OrderID = new Guid();
+        order.OrderID = Guid.NewGuid();
+        order._id = order.OrderID;
+
+        foreach(OrderItem orderItem in order.OrderItems)
+        {
+            orderItem._id = Guid.NewGuid();
+        }
         await _orders.InsertOneAsync(order);
         return order;
     }
@@ -50,7 +56,8 @@ public class OrdersRepository : IOrdersRepository
         FilterDefinition<Order> filter = Builders<Order>.Filter.Eq(temp => temp.OrderID, order.OrderID);
         Order? existingOrder = (await _orders.FindAsync(filter)).FirstOrDefault();
         if (existingOrder == null) return null;
-        ReplaceOneResult replaceOneResult= await _orders.ReplaceOneAsync(filter, existingOrder);
+        order._id = existingOrder.OrderID;
+        ReplaceOneResult replaceOneResult= await _orders.ReplaceOneAsync(filter, order);
         return order;
     }
 }
