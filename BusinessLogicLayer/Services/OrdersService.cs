@@ -8,9 +8,6 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using SharpCompress.Compressors.ZStandard.Unsafe;
-using System.Security.Cryptography.X509Certificates;
-using static System.Net.WebRequestMethods;
 
 namespace eCommerce.OrdersMicroservice.BusinessLogicLayer.Services;
 

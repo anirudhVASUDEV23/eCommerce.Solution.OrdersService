@@ -11,10 +11,12 @@ services:
       MONGODB_HOST: mongodb-container
       MONGODB_PORT: 27017
       MONGODB_DATABASE: OrdersDatabase
-      UsersMicroserviceName: users-microservice
-      UsersMicroservicePort: 9090
-      ProductsMicroserviceName: products-microservice
+      UsersMicroserviceName: apigateway
+      UsersMicroservicePort: 8080
+      ProductsMicroserviceName: apigateway
       ProductsMicroservicePort: 8080
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "7000:8080"
     networks:
@@ -23,6 +25,8 @@ services:
     depends_on:
       - mongodb-container
       - users-microservice
+      - products-microservice
+      - redis
 
   mongodb-container:
     image: mongo:latest
@@ -36,8 +40,8 @@ services:
   products-microservice:
     image: products-microservice:latest
     environment:
-      ASPNETCORE_HTTP_PORTS: 8080
       ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
       MYSQL_HOST: mysql-container
       MYSQL_PORT: 3306
       MYSQL_DATABASE: ecommerceproductsdatabase
@@ -65,8 +69,8 @@ services:
   users-microservice:
     image: users-microservice:latest
     environment:
-      ASPNETCORE_HTTP_PORTS: 8080
       ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
       POSTGRES_HOST: postgres-container
       POSTGRES_PORT: 5432
       POSTGRES_DATABASE: eCommerceUsers
@@ -93,12 +97,38 @@ services:
     networks:
       - users-postgres-network
 
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - "C:/Users/Anirudh/source/repos/redis-cache:/data"
+    networks:
+      - ecommerce-network
+
+  apigateway:
+    image: apigateway
+    build:
+      context: .
+      dockerfile: ApiGateway/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+    ports:
+      - "4000:8080"
+    networks:
+      - ecommerce-network
+    
+
 networks:
   orders-mongodb-network:
     driver: bridge
+
   products-mysql-network:
     driver: bridge
+
   users-postgres-network:
     driver: bridge
+
   ecommerce-network:
     driver: bridge

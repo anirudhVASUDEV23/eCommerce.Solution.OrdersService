@@ -2,8 +2,10 @@
 using eCommerce.OrdersMicroservice.BusinessLogicLayer;
 using eCommerce.OrdersMicroservice.BusinessLogicLayer.HttpClients;
 using eCommerce.OrdersMicroservice.DataAccessLayer;
+using eCommerce.OrdersMicroService.BusinessLogicLayer.Policies;
 using FluentValidation.AspNetCore;
 using OrdersMicroService.API.Middleware;
+using Polly;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,16 +32,29 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddTransient<IUsersMicroservicePolicies, UsersMicroservicePolicies>();
+builder.Services.AddTransient<IProductsMicroservicePolicies, ProductsMicroservicePolicies>();
+builder.Services.AddTransient<IPollyPolicies, PollyPolicies>();
+
 
 builder.Services.AddHttpClient<UsersMicroServiceClient>(client =>
 {
     client.BaseAddress = new Uri($"http://{builder.Configuration["UsersMicroserviceName"]}:{builder.Configuration["UsersMicroservicePort"]}");
-});
+})
+.AddPolicyHandler(//Using polly for circuit in case of an error
+    builder.Services.BuildServiceProvider().GetService<IUsersMicroservicePolicies>().GetCombinedPolicy()
+    )
+
+;
 
 builder.Services.AddHttpClient<ProductsMicroServiceClient>(client =>
 {
     client.BaseAddress = new Uri($"http://{builder.Configuration["ProductsMicroserviceName"]}:{builder.Configuration["ProductsMicroservicePort"]}");
-});
+}).AddPolicyHandler(//Using polly for retrying in case of an error
+    builder.Services.BuildServiceProvider().GetService<IProductsMicroservicePolicies>().GetFallbackPolicy())
+   .AddPolicyHandler(//Using polly for retrying in case of an error
+    builder.Services.BuildServiceProvider().GetService<IProductsMicroservicePolicies>().GetBulkheadIsolationPolicy())
+;
 
 var app = builder.Build();
 

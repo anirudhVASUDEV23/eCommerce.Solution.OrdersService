@@ -5,6 +5,7 @@ using eCommerce.OrdersMicroservice.BusinessLogicLayer.Validators;
 using eCommerce.OrdersMicroservice.BusinessLogicLayer.Mappers;
 using eCommerce.OrdersMicroService.BusinessLogicLayer.ServiceContracts;
 using eCommerce.OrdersMicroservice.BusinessLogicLayer.Services;
+using StackExchange.Redis;
 
 namespace eCommerce.OrdersMicroservice.BusinessLogicLayer
 {
@@ -18,6 +19,10 @@ namespace eCommerce.OrdersMicroservice.BusinessLogicLayer
             services.AddAutoMapper(cfg => { },typeof(OrderAddRequestToOrderMappingProfile));
 
             services.AddScoped<IOrdersService, OrdersService>();
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = $"{configuration["REDIS_HOST"]}:{configuration["REDIS_PORT"]}";
+            });
             return services;
         }
     }
